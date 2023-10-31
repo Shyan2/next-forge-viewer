@@ -5,7 +5,7 @@ const bodyData = {
 	scope: 'data:read',
 };
 
-export const POST = async (req: NextApiRequest, res: NextApiResponse) => {
+export const POST = async () => {
 	const clientId: string = process.env.FORGE_CLIENT_ID || '';
 	const clientSecret: string = process.env.FORGE_CLIENT_SECRET || '';
 
