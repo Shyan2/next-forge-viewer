@@ -1,9 +1,7 @@
-'use client';
+import React from 'react';
 
-import Viewer from '@components/Viewer';
-
-const ViewerPage = () => {
-	return <Viewer urn={'urn will go here'} />;
+const ViewerMainPage = () => {
+	return <div>ViewerMainPage</div>;
 };
 
-export default ViewerPage;
+export default ViewerMainPage;
