@@ -1,12 +1,12 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
-import { useViewerToken } from '@hooks/useViewerToken'; // Adjust the path to where you've saved the hook
+import { useEffect, useRef } from 'react';
+import { useViewerToken } from '@hooks/useViewerToken';
 
 declare const Autodesk: any;
 
-interface GeometryLoadedEvent {
-	[key: string]: any; // This allows any string key with any value.
-}
+type Viewer3D = Autodesk.Viewing.GuiViewer3D;
+type ViewerEvent = Autodesk.Viewing.ViewerEvent;
+type Document = Autodesk.Viewing.Document;
 
 interface ViewerProps {
 	urn: string;
@@ -15,44 +15,29 @@ interface ViewerProps {
 
 const Viewer = ({ urn, setError }: ViewerProps) => {
 	const { accessToken, tokenError, loading } = useViewerToken();
+	console.log(accessToken);
 
-	useEffect(() => {
-		if (urn && window) {
-			initializeViewer();
-		}
+	const viewerRef = useRef<Viewer3D | null>(null);
+	const viewerDomRef = useRef<HTMLDivElement | null>(null);
 
-		return function cleanUp() {
-			if (viewerRef.current && (viewerRef.current as any).finish) {
-				(viewerRef.current as any).finish();
-			}
-		};
-	}, [accessToken, urn]);
+	const onModelLoaded = (event: ViewerEvent) => {
+		const viewer = viewerRef.current as Viewer3D;
 
-	const viewerRef = useRef(null);
-	const viewerDomRef = useRef(null);
-
-	const onModelLoaded = (event: GeometryLoadedEvent) => {
-		const viewer = viewerRef.current as any;
-
+		// clean up events
 		viewer.removeEventListener(Autodesk.Viewing.GEOMETRY_LOADED_EVENT, onModelLoaded);
+
+		//
 	};
 
 	const initializeViewer = () => {
-		if (!accessToken) {
-			console.warn('Access token not available yet. Viewer not initialized.');
-			return;
-		}
-
 		const viewerOptions = {
 			accessToken: accessToken,
 			env: 'AutodeskProduction2',
 			api: 'streamingV2',
 		};
 
-		Autodesk.Viewing.Initializer(viewerOptions, async () => {
-			const viewer = new Autodesk.Viewing.GuiViewer3D(viewerDomRef.current, {
-				extensions: ['Autodesk.DocumentBrowser'],
-			});
+		Autodesk.Viewing.Initializer(viewerOptions, () => {
+			const viewer = new Autodesk.Viewing.GuiViewer3D(viewerDomRef.current);
 
 			viewerRef.current = viewer;
 
@@ -70,10 +55,9 @@ const Viewer = ({ urn, setError }: ViewerProps) => {
 		});
 	};
 
-	const loadModel = (viewer: any, documentId: String) => {
-		const onDocumentLoadSuccess = (viewerDocument: any) => {
+	const loadModel = (viewer: Viewer3D, documentId: string) => {
+		const onDocumentLoadSuccess = (viewerDocument: Document) => {
 			const defaultModel = viewerDocument.getRoot().getDefaultGeometry();
-			console.log(viewerDocument.getRoot());
 
 			viewer.loadDocumentNode(viewerDocument, defaultModel, {
 				keepCurrentModels: true,
@@ -81,14 +65,29 @@ const Viewer = ({ urn, setError }: ViewerProps) => {
 		};
 
 		const onDocumentLoadFailure = (error: any) => {
-			console.error('Failed fetching Forge manifest');
-			setError(error.message || 'Failed fetching Forge manifest. Please try a different urn.');
+			const errorMessage = 'Failed fetching Forge manifest';
+			console.error(errorMessage);
+			setError(error.message || errorMessage);
 		};
 
 		if (documentId) {
 			Autodesk.Viewing.Document.load(`urn:${documentId}`, onDocumentLoadSuccess, onDocumentLoadFailure);
 		}
 	};
+
+	useEffect(() => {
+		if (typeof Autodesk !== 'undefined' && urn && accessToken && window) {
+			initializeViewer();
+		}
+
+		const cleanUpViewer = () => {
+			if (viewerRef.current && (viewerRef.current as Viewer3D).finish) {
+				(viewerRef.current as Viewer3D).finish();
+			}
+		};
+
+		return cleanUpViewer;
+	}, [accessToken, urn]);
 
 	if (loading) return <div>Loading...</div>;
 	if (tokenError) return <div>Error with Token: {tokenError}</div>;

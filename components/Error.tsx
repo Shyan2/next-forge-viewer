@@ -1,10 +1,12 @@
 import { useRouter } from 'next/navigation';
+
 interface ErrorProps {
 	message: string;
 }
 
 const Error = ({ message }: ErrorProps) => {
 	const router = useRouter();
+
 	const handleClick = () => {
 		router.push('/');
 	};

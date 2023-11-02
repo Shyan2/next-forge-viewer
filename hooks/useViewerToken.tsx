@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 
 export const useViewerToken = () => {
-	const [accessToken, setAccessToken] = useState(null);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState(null);
-
+	const [accessToken, setAccessToken] = useState<string>('');
+	const [error, setError] = useState<string>('');
+	const [loading, setLoading] = useState<boolean>(false);
+	console.log('fetching token!');
 	useEffect(() => {
 		const getToken = async () => {
 			setLoading(true);
@@ -13,15 +13,17 @@ export const useViewerToken = () => {
 					method: 'POST',
 				});
 
+				console.log(response);
+
 				if (!response.ok) {
 					throw new Error('Failed to fetch token');
 				}
-
 				const { data } = await response.json();
 				setAccessToken(data.token);
-			} catch (error: any) {
-				setError(error.message || 'An error occurred while fetching the token');
-				setAccessToken(null);
+			} catch (error: unknown) {
+				const message = (error as Error).message || 'An error occurred while fetching the token';
+				setError(message);
+				setAccessToken('');
 			} finally {
 				setLoading(false);
 			}
