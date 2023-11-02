@@ -1,7 +1,8 @@
 export default function Home() {
 	return (
-		<main>
-			<h1>Barebone Forge Viewer</h1>
-		</main>
+		<section className="w-full flex flex-center flex-col items-center  gap-4">
+			<h1 className="mt-5 text-5xl font-extrabold leading-[1.15] text-black sm:text-6xl">Barebone Forge Viewer</h1>
+			<p>Developed with NextJS and Tailwind CSS</p>
+		</section>
 	);
 }

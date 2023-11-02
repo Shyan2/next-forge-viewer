@@ -1,45 +1,20 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useViewerToken } from '@hooks/useViewerToken'; // Adjust the path to where you've saved the hook
 
 declare const Autodesk: any;
-
-interface ViewerProps {
-	urn: string;
-}
 
 interface GeometryLoadedEvent {
 	[key: string]: any; // This allows any string key with any value.
 }
 
-const Viewer: React.FC<ViewerProps> = ({ urn }) => {
-	const [accessToken, setAccessToken] = useState(null);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState(null);
+interface ViewerProps {
+	urn: string;
+	setError: (error: string | Error) => void;
+}
 
-	const getToken = async () => {
-		setLoading(true);
-		try {
-			const response = await fetch('/api/forge/viewer', {
-				method: 'POST',
-			});
-
-			if (!response.ok) {
-				throw new Error('Failed to fetch token');
-			}
-
-			const { data } = await response.json();
-
-			setAccessToken(data.token);
-		} catch (error: any) {
-			setError(error.message || 'An unknown error occurred.');
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	useEffect(() => {
-		getToken();
-	}, []);
+const Viewer = ({ urn, setError }: ViewerProps) => {
+	const { accessToken, tokenError, loading } = useViewerToken();
 
 	useEffect(() => {
 		if (urn && window) {
@@ -92,16 +67,13 @@ const Viewer: React.FC<ViewerProps> = ({ urn }) => {
 			});
 
 			loadModel(viewer, urn);
-
-			// if (props?.onViewerInitialized) {
-			// 	props.onViewerInitialized(viewer);
-			// }
 		});
 	};
 
 	const loadModel = (viewer: any, documentId: String) => {
 		const onDocumentLoadSuccess = (viewerDocument: any) => {
 			const defaultModel = viewerDocument.getRoot().getDefaultGeometry();
+			console.log(viewerDocument.getRoot());
 
 			viewer.loadDocumentNode(viewerDocument, defaultModel, {
 				keepCurrentModels: true,
@@ -110,7 +82,7 @@ const Viewer: React.FC<ViewerProps> = ({ urn }) => {
 
 		const onDocumentLoadFailure = (error: any) => {
 			console.error('Failed fetching Forge manifest');
-			setError(error.message || 'An unknown error occurred.');
+			setError(error.message || 'Failed fetching Forge manifest. Please try a different urn.');
 		};
 
 		if (documentId) {
@@ -119,7 +91,7 @@ const Viewer: React.FC<ViewerProps> = ({ urn }) => {
 	};
 
 	if (loading) return <div>Loading...</div>;
-	if (error) return <div>Error: {error}</div>;
+	if (tokenError) return <div>Error with Token: {tokenError}</div>;
 
 	return <div ref={viewerDomRef} className="h-full w-full relative"></div>;
 };

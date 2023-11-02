@@ -11,7 +11,7 @@ export default function ViewerLayout({ children }: { children: React.ReactNode }
 			<Script src="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.min.js" />
 			{/* End Autodesk Forge Viewer files */}
 
-			<section>{children}</section>
+			<section className="h-full w-full">{children}</section>
 		</>
 	);
 }
